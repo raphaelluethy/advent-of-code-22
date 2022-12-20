@@ -1,8 +1,12 @@
 export const x = '';
 
+// sol: 2658
+
 const input = await Deno.readTextFile('./input.txt');
 
 const lines = input.split('\n');
+
+const TAIL_LENGTH = 9;
 
 type Point = {
     x: number;
@@ -14,10 +18,14 @@ const Head: Point = {
     y: 0,
 };
 
-const Tail: Point = {
-    x: 0,
-    y: 0,
-};
+
+const tailList: Point[] = Array.from({ length: TAIL_LENGTH }).map(() => ({ x: 0, y: 0 }));
+
+console.log(tailList)
+
+const Tail = tailList[TAIL_LENGTH - 1];
+
+
 
 const tailHistory: Set<string> = new Set(['0,0']);
 
@@ -40,20 +48,26 @@ const executeCommand = (command: string, Head: Point, Tail: Point) => {
             default:
                 throw new Error(`Unknown direction: ${direction}`);
         }
-        handleTail(Head, Tail);
+        handleTail(Head, tailList[0], false);
+        for (let i = 0; i < tailList.length - 1; i++) {
+            handleTail(tailList[i], tailList[i + 1], false);
+        }
+        console.log('loop over');
+        handleTail(tailList[tailList.length - 2], Tail, true);
+
     }
 };
 
 const checkIfAdjacent = (Head: Point, Tail: Point) => {
     const isDiagonalAdjacent = Math.abs(Head.x - Tail.x) === 1 && Math.abs(Head.y - Tail.y) === 1;
-    if(isDiagonalAdjacent) return true;
+    if (isDiagonalAdjacent) return true;
 
     const areNextToEachOther = Math.abs(Head.x - Tail.x) <= 1 && Math.abs(Head.y - Tail.y) <= 1;
     return areNextToEachOther;
 }
 
-const handleTail = (Head: Point, Tail: Point) => {
-    if(checkIfAdjacent(Head, Tail)) return;
+const handleTail = (Head: Point, Tail: Point, isLast: boolean) => {
+    if (checkIfAdjacent(Head, Tail)) return;
     const moveRight = Head.x > Tail.x;
     const moveLeft = Head.x < Tail.x;
     const moveUp = Head.y > Tail.y;
@@ -72,7 +86,10 @@ const handleTail = (Head: Point, Tail: Point) => {
         Tail.y -= 1;
     }
 
-    tailHistory.add(`${Tail.x},${Tail.y}`);
+    if (isLast) {
+        console.log('is last');
+        tailHistory.add(`${Tail.x},${Tail.y}`);
+    }
 };
 
 for (const line of lines) {
@@ -83,3 +100,4 @@ console.log({
     commands: lines.length,
     tailHistory: tailHistory.size,
 });
+
